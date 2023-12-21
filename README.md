@@ -1,1 +1,1 @@
-# This New "Notes" apps for any one can use.
+# This New "Notes" apps.
