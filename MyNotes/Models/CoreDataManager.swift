@@ -69,4 +69,19 @@ extension CoreDataManager {
         save()
         
     }
+    
+    func createNotesFetchResultController(filter: String? = nil) ->
+    NSFetchedResultsController<Note> {
+        let request: NSFetchRequest<Note> = Note.fetchRequest()
+        let sortDescriptor = NSSortDescriptor(keyPath: \Note.lastUpdated, ascending: false)
+        request.sortDescriptors = [sortDescriptor]
+        
+        if let filter = filter {
+            let predicate = NSPredicate(format: "text contains[cd] %@", filter)
+            request.predicate = predicate
+        }
+        
+        return NSFetchedResultsController(fetchRequest: request, managedObjectContext: viewContext, sectionNameKeyPath: nil, cacheName: nil)
+    }
+        
 }

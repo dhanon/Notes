@@ -1,9 +1,9 @@
 import UIKit
-
-protocol ListNotesDelegate: class {
-    func refreshNotes()
-    func deleteNote(with id: UUID)
-}
+import CoreData
+//protocol ListNotesDelegate: class {
+//    func refreshNotes()
+//    func deleteNote(with id: UUID)
+//}
 
 class ListNotesViewController: UIViewController {
     
@@ -18,7 +18,7 @@ class ListNotesViewController: UIViewController {
         }
     }
     private var filteredNotes: [Note] = []
-
+    private var fetchedResultsController: NSFetchedResultsController <Note>!
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -26,6 +26,12 @@ class ListNotesViewController: UIViewController {
         tableView.contentInset = .init(top: 0, left: 0, bottom: 30, right: 0)
         configureSearchBar()
         fetchNotesFromStorage()
+    }
+    
+    func setupFetchResultController() {
+        fetchedResultsController = CoreDataManager.shared.createNotesFetchResultController()
+        fetchedResultsController.delegate = self
+        try? fetchedResultsController.performFetch()
     }
     
     private func indexForNote(id: UUID, in list: [Note]) -> IndexPath {
@@ -131,20 +137,25 @@ extension ListNotesViewController: UISearchControllerDelegate, UISearchBarDelega
     }
 }
 
-// MARK:- ListNotes Delegate
-extension ListNotesViewController: ListNotesDelegate {
+//// MARK:- ListNotes Delegate
+//extension ListNotesViewController: ListNotesDelegate {
+//
+//    func refreshNotes() {
+//        allNotes = allNotes.sorted { $0.lastUpdated > $1.lastUpdated }
+//        tableView.reloadData()
+//    }
+//
+//    func deleteNote(with id: UUID) {
+//        let indexPath = indexForNote(id: id, in: filteredNotes)
+//        filteredNotes.remove(at: indexPath.row)
+//        tableView.deleteRows(at: [indexPath], with: .automatic)
+//
+//        // just so that it doesn't come back when we search from the array
+//        allNotes.remove(at: indexForNote(id: id, in: allNotes).row)
+//    }
+//}
+
+//MARK:- NSFetchedResultController Delegate
+extension ListNotesViewController: NSFetchedResultsControllerDelegate {
     
-    func refreshNotes() {
-        allNotes = allNotes.sorted { $0.lastUpdated > $1.lastUpdated }
-        tableView.reloadData()
-    }
-    
-    func deleteNote(with id: UUID) {
-        let indexPath = indexForNote(id: id, in: filteredNotes)
-        filteredNotes.remove(at: indexPath.row)
-        tableView.deleteRows(at: [indexPath], with: .automatic)
-        
-        // just so that it doesn't come back when we search from the array
-        allNotes.remove(at: indexForNote(id: id, in: allNotes).row)
-    }
 }
