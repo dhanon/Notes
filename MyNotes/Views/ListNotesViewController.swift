@@ -11,13 +11,13 @@ class ListNotesViewController: UIViewController {
     @IBOutlet weak private var notesCountLbl: UILabel!
     private let searchController = UISearchController()
     
-    private var allNotes: [Note] = [] {
-        didSet {
-            notesCountLbl.text = "\(allNotes.count) \(allNotes.count == 1 ? "Note" : "Notes")"
-            filteredNotes = allNotes
-        }
-    }
-    private var filteredNotes: [Note] = []
+//    private var allNotes: [Note] = [] {
+//        didSet {
+//            notesCountLbl.text = "\(allNotes.count) \(allNotes.count == 1 ? "Note" : "Notes")"
+//            filteredNotes = allNotes
+//        }
+//    }
+//     private var filteredNotes: [Note] = []
     private var fetchedResultsController: NSFetchedResultsController <Note>!
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -25,19 +25,26 @@ class ListNotesViewController: UIViewController {
         self.navigationController?.navigationBar.shadowImage = UIImage()
         tableView.contentInset = .init(top: 0, left: 0, bottom: 30, right: 0)
         configureSearchBar()
-        fetchNotesFromStorage()
+        setupFetchResultController()
+        refreshCountLbl()
     }
     
-    func setupFetchResultController() {
-        fetchedResultsController = CoreDataManager.shared.createNotesFetchResultController()
+    func refreshCountLbl(){
+        let count = fetchedResultsController.sections![0].numberOfObjects
+        notesCountLbl.text = "\(count) \(count == 1 ? "Note" : "Notes")"
+    }
+    
+    func setupFetchResultController(filter: String? = nil) {
+        fetchedResultsController = CoreDataManager.shared.createNotesFetchResultController(filter: filter)
         fetchedResultsController.delegate = self
         try? fetchedResultsController.performFetch()
+        refreshCountLbl()
     }
     
-    private func indexForNote(id: UUID, in list: [Note]) -> IndexPath {
-        let row = Int(list.firstIndex(where: { $0.id == id }) ?? 0)
-        return IndexPath(row: row, section: 0)
-    }
+//    private func indexForNote(id: UUID, in list: [Note]) -> IndexPath {
+//        let row = Int(list.firstIndex(where: { $0.id == id }) ?? 0)
+//        return IndexPath(row: row, section: 0)
+//    }
     
     private func configureSearchBar() {
         navigationItem.searchController = searchController
@@ -53,7 +60,7 @@ class ListNotesViewController: UIViewController {
     private func goToEditNote(_ note: Note) {
         let controller = storyboard?.instantiateViewController(identifier: EditNoteViewController.identifier) as! EditNoteViewController
         controller.note = note
-        controller.delegate = self
+        //controller.delegate = self
         navigationController?.pushViewController(controller, animated: true)
     }
     
@@ -61,47 +68,55 @@ class ListNotesViewController: UIViewController {
     private func createNote() -> Note {
         let note = CoreDataManager.shared.createNote()
         // Update table
-        allNotes.insert(note, at: 0)
-        tableView.insertRows(at: [IndexPath(row: 0, section: 0)], with: .automatic)
-        
+//        allNotes.insert(note, at: 0)
+//        tableView.insertRows(at: [IndexPath(row: 0, section: 0)], with: .automatic)
         return note
     }
     
-    private func fetchNotesFromStorage() {
-       allNotes = CoreDataManager.shared.fetchNotes()
-    }
+//    private func fetchNotesFromStorage() {
+//       allNotes = CoreDataManager.shared.fetchNotes()
+//    }
     
     private func deleteNoteFromStorage(_ note: Note) {
-        deleteNote(with: note.id)
         CoreDataManager.shared.deleteNote(note)
         
     }
     
-    private func searchNotesFromStorage(_ text: String) {
-        allNotes = CoreDataManager.shared.fetchNotes(filter: text)
-        tableView.reloadData()
-    }
+//    private func searchNotesFromStorage(_ text: String) {
+//        allNotes = CoreDataManager.shared.fetchNotes(filter: text)
+//        tableView.reloadData()
+//    }
 }
 
 // MARK: TableView Configuration
 extension ListNotesViewController: UITableViewDataSource, UITableViewDelegate {
+    
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return fetchedResultsController.sections?.count ?? 1
+        
+    }
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return filteredNotes.count
+        let notes = fetchedResultsController.sections![section]
+        return notes.numberOfObjects
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: ListNoteTableViewCell.identifier) as! ListNoteTableViewCell
-        cell.setup(note: filteredNotes[indexPath.row])
+        let note = fetchedResultsController.object(at: indexPath)
+        cell.setup(note: note)
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        goToEditNote(filteredNotes[indexPath.row])
+        let note = fetchedResultsController.object(at: indexPath)
+        goToEditNote(note)
     }
     
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
-            deleteNoteFromStorage(filteredNotes[indexPath.row])
+            let note = fetchedResultsController.object(at: indexPath)
+            deleteNoteFromStorage(note)
         }
     }
     
@@ -122,15 +137,15 @@ extension ListNotesViewController: UISearchControllerDelegate, UISearchBarDelega
     }
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        guard let query = searchBar.text, !query.isEmpty else { return }
-        searchNotesFromStorage(query)
+        search(searchBar.text ?? "")
+        //searchNotesFromStorage(query)
     }
     
     func search(_ query: String) {
         if query.count >= 1 {
-            filteredNotes = allNotes.filter { $0.text.lowercased().contains(query.lowercased()) }
+            setupFetchResultController(filter: query)
         } else{
-            filteredNotes = allNotes
+            setupFetchResultController()
         }
         
         tableView.reloadData()
