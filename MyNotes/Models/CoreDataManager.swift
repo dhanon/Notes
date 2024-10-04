@@ -1,10 +1,3 @@
-//
-//  CoreDataManager.swift
-//  MyNotes
-//
-//  Created by Anon's MacBook Pro on 21/12/23.
-//
-
 import Foundation
 import CoreData
 

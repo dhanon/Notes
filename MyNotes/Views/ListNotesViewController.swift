@@ -152,7 +152,7 @@ extension ListNotesViewController: UISearchControllerDelegate, UISearchBarDelega
     }
 }
 
-//// MARK:- ListNotes Delegate
+// MARK:- ListNotes Delegate
 //extension ListNotesViewController: ListNotesDelegate {
 //
 //    func refreshNotes() {
